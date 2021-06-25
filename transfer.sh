@@ -16,27 +16,34 @@ do
 	newArr=(${NEW//\// })
 	dirName=${newArr[3]/\.git/ }
 	
-	logMessage ${dirName} "Build Dir ${dirName}."
-	mkdir $dirName
+	if [ ! -d  $repositoriesDir/$dirName ]; then
+		logMessage ${dirName} "Build Dir ${dirName}."
+		mkdir $repositoriesDir/$dirName
+	fi
 
-	cd $dirName
-	logMessage ${dirName} "Clone ${OLD}."
-	cloneResponse=$(git clone $OLD . 2>&1)
+	cd $repositoriesDir/$dirName
 
-	logMessage ${dirName} "Clone Response: ${cloneResponse}."
+	if [ ! -d ".git" ]; then
+		logMessage ${dirName} "Clone ${OLD}."
+		git clone $OLD .
+		logMessage ${dirName} "Clone complete."
+	fi
 
-	logMessage ${dirName} "Add remote ${NEW}."
-	git remote add bitbucket $NEW
-
-	#logMessage "$(git remote -v)"
+	if git ls-remote bitbucket > /dev/null; then
+		logMessage ${dirName} "Bitbucket remote exists. Fetch latest from origin and merge"
+		git fetch origin
+		mergeResponse=$(git merge origin/master 2>&1)
+		logMessage ${dirName} "Merge Response: ${mergeResponse}"
+	else
+		logMessage ${dirName} "Bitbucket doesn't exist. Add remote ${NEW}."
+		git remote add bitbucket $NEW
+	fi
 
 	logMessage ${dirName} "Push Master to bitbucket."
-	pushResponse=$(git push bitbucket master)
+	pushResponse=$(git push bitbucket master 2>&1)
 	logMessage  ${dirName} "Push Response: ${pushResponse}."
-	cd ..
-
-	logMessage ${dirName} "Delete Dir ${dirName}."
-	rm -Rf $dirName
+	cd $repositoriesDir
+	
 done < repository-cleanup.csv
 
 logMessage "End" "End Repo Sync"
