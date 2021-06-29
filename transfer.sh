@@ -1,13 +1,16 @@
 #!/bin/bash
 
 timestamp() {
-	date +"%T:%N" # current time
+	date +"%F %T:%N" # current time
 }
-
-logPath=$(pwd)
 logMessage() {
 	echo "\"$1\" [$(timestamp)] \"$2\"" >> $logPath/log
 }
+
+logPath=$(pwd)
+# https://stackoverflow.com/questions/3915040/how-to-obtain-the-absolute-path-of-a-file-via-shell-bash-zsh-sh
+absolutePath="$(cd ../"$(dirname "$1")"; pwd -P)/$(basename "$1")"
+repositoriesDir="${absolutePath}repositories"
 
 logMessage "Start" "Begin Repo Sync."
 
@@ -25,13 +28,14 @@ do
 
 	if [ ! -d ".git" ]; then
 		logMessage ${dirName} "Clone ${OLD}."
-		git clone $OLD .
+		cloneResponse=$(git clone --mirror $OLD . 2>&1)
+		logMessage ${dirName} ${cloneResponse}
 		logMessage ${dirName} "Clone complete."
 	fi
 
-	if git ls-remote bitbucket > /dev/null; then
+	if git config remote.bitbucket.url; then
 		logMessage ${dirName} "Bitbucket remote exists. Fetch latest from origin and merge"
-		git fetch origin
+		git pull
 		mergeResponse=$(git merge origin/master 2>&1)
 		logMessage ${dirName} "Merge Response: ${mergeResponse}"
 	else
@@ -39,8 +43,8 @@ do
 		git remote add bitbucket $NEW
 	fi
 
-	logMessage ${dirName} "Push Master to bitbucket."
-	pushResponse=$(git push bitbucket master 2>&1)
+	logMessage ${dirName} "Push all to bitbucket."
+	pushResponse=$(git push --mirror bitbucket 2>&1)
 	logMessage  ${dirName} "Push Response: ${pushResponse}."
 	cd $repositoriesDir
 	
@@ -49,4 +53,3 @@ done < repository-cleanup.csv
 logMessage "End" "End Repo Sync"
 
 exit
-
