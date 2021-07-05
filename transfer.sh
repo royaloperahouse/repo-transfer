@@ -47,8 +47,8 @@ do
 	pushResponse=$(git push --mirror bitbucket 2>&1)
 	logMessage  ${dirName} "Push Response: ${pushResponse}."
 	cd $repositoriesDir
-	
-done < repository-cleanup.csv
+	break
+done < trouble-repositories.csv
 
 logMessage "End" "End Repo Sync"
 

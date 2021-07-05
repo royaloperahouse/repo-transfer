@@ -33,15 +33,17 @@ do
 		logMessage ${dirName} "Clone complete."
 	fi
 
-    # track all remote branches
-    git branch -r | grep -v '\->' | while read remote; do git branch --track "${remote#origin/}" "$remote"; done
-
-    if [ ! -d  $repositoriesDir/$dirName ]; then
-        rm -Rf $repositoriesDir/$dirName/.git/hooks
-    fi
-
-    logMessage ${dirName} "Add remote $NEW."
-    git remote add bitbucket $NEW
+	git fetch
+	
+	if git config remote.bitbucket.url; then
+		logMessage ${dirName} "Bitbucket remote exists. Fetch latest from origin and merge"
+		git pull
+		mergeResponse=$(git merge origin/master 2>&1)
+		logMessage ${dirName} "Merge Response: ${mergeResponse}"
+	else
+		logMessage ${dirName} "Bitbucket doesn't exist. Add remote ${NEW}."
+		git remote add bitbucket $NEW
+	fi
 
     logMessage ${dirName} "Push all to bitbucket."
 	pushResponse=$(git push --all bitbucket 2>&1)

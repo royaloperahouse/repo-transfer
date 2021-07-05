@@ -7,4 +7,4 @@ From this list it:
 * Adds the new remote 
 * Pushes master to that remote
 
-
+https://stackoverflow.com/questions/3915040/how-to-obtain-the-absolute-path-of-a-file-via-shell-bash-zsh-sh
